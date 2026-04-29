@@ -119,92 +119,77 @@ def path_costs(path,adj):
 # PREMIUM GRAPH DRAWING
 # ═══════════════════════════════════════════════════════════
 def draw_network(adj, paths_data, blocked=None, title="WaselX Network", figsize=(18,12)):
-    fig, ax = plt.subplots(1,1, figsize=figsize, facecolor='#0E1117')
-    ax.set_facecolor('#0E1117')
+    fig, ax = plt.subplots(1,1, figsize=figsize, facecolor='white')
+    ax.set_facecolor('white')
 
     G = nx.Graph()
     for n in NODES: G.add_node(n)
     for u,v,road,d,t,c in EDGES:
         if blocked and ((u,v)==blocked or (v,u)==blocked): continue
-        G.add_edge(u,v)
+        G.add_edge(u,v,dist=d)
 
-    # Base edges - thicker, more visible
-    nx.draw_networkx_edges(G, NODE_POS, ax=ax, edge_color='#3a3a5c', width=2.0, alpha=0.6, style='solid')
-
-    # Highlighted paths
-    colors = ['#FF4757','#1E90FF','#2ED573']
+    # Base edges
+    all_edges = list(G.edges())
+    path_edges_set = set()
+    colors = ['#E74C3C','#2980B9','#27AE60']
     handles = []
     path_nodes = set()
+    for idx, pd_item in enumerate(paths_data):
+        path = pd_item['path']
+        if len(path) < 2: continue
+        pe = [(path[i],path[i+1]) for i in range(len(path)-1)]
+        for e in pe: path_edges_set.add(e); path_edges_set.add((e[1],e[0]))
+        path_nodes.update(path)
+
+    other_edges = [(u,v) for u,v in all_edges if (u,v) not in path_edges_set and (v,u) not in path_edges_set]
+    nx.draw_networkx_edges(G, NODE_POS, edgelist=other_edges, ax=ax, edge_color='#BBBBBB', width=1.8, alpha=0.6)
+
     for idx, pd_item in enumerate(paths_data):
         col = colors[idx % len(colors)]
         path = pd_item['path']
         if len(path) < 2: continue
         pe = [(path[i],path[i+1]) for i in range(len(path)-1)]
-        nx.draw_networkx_edges(G, NODE_POS, edgelist=pe, ax=ax, edge_color=col,
-                               width=5.0, alpha=0.95, style='solid')
-        path_nodes.update(path)
+        nx.draw_networkx_edges(G, NODE_POS, edgelist=pe, ax=ax, edge_color=col, width=5.0, alpha=0.9)
         handles.append(mpatches.Patch(color=col, label=pd_item['label']))
 
-    # Blocked edge
     if blocked and blocked[0] in NODE_POS and blocked[1] in NODE_POS:
         bx = [NODE_POS[blocked[0]][0], NODE_POS[blocked[1]][0]]
         by = [NODE_POS[blocked[0]][1], NODE_POS[blocked[1]][1]]
-        ax.plot(bx, by, '--', color='#FF6348', linewidth=3, alpha=0.8)
-        ax.plot(bx, by, 'X', color='#FF6348', markersize=20, alpha=0.9)
-        handles.append(mpatches.Patch(color='#FF6348', label=f'Blocked: {blocked[0]}↔{blocked[1]}'))
+        ax.plot(bx, by, 'X--', color='red', linewidth=3, markersize=18)
+        handles.append(mpatches.Patch(color='red', label=f'Blocked: {blocked[0]}<->{blocked[1]}'))
 
-    # Draw nodes - LARGE and readable
     for n in ALL_NODES:
         is_hub = n.startswith('H')
         in_path = n in path_nodes
         if in_path:
-            color = '#FF4757' if not is_hub else '#FF6348'
-            size = 1200
-            ec = '#FFFFFF'
-            ew = 3
+            color = '#D35400' if is_hub else '#E74C3C'
+            size = 1100
         elif is_hub:
-            color = '#FF6B35'
+            color = '#E67E22'
             size = 900
-            ec = '#FFFFFF'
-            ew = 2
         else:
-            color = '#4ECDC4'
+            color = '#1ABC9C'
             size = 700
-            ec = '#FFFFFF'
-            ew = 1.5
         nx.draw_networkx_nodes(G, NODE_POS, nodelist=[n], ax=ax,
                                node_color=color, node_size=size,
-                               edgecolors=ec, linewidths=ew, alpha=0.95)
+                               edgecolors='#2C3E50', linewidths=2.5, alpha=0.95)
 
-    # Node labels - LARGE white text
-    nx.draw_networkx_labels(G, NODE_POS, ax=ax, font_size=11, font_weight='bold',
+    nx.draw_networkx_labels(G, NODE_POS, ax=ax, font_size=12, font_weight='bold',
                             font_color='white', font_family='sans-serif')
 
-    # Edge weight labels - visible
     edge_labels = {}
     for u,v,road,d,t,c in EDGES:
         if blocked and ((u,v)==blocked or (v,u)==blocked): continue
         edge_labels[(u,v)] = f"{d}km"
     nx.draw_networkx_edge_labels(G, NODE_POS, edge_labels=edge_labels, ax=ax,
-                                  font_size=9, font_color='#B0B0B0', font_weight='bold',
-                                  bbox=dict(boxstyle='round,pad=0.15', facecolor='#1a1a2e',
-                                           edgecolor='none', alpha=0.8))
+                                  font_size=9, font_color='#555555', font_weight='bold',
+                                  bbox=dict(boxstyle='round,pad=0.2', fc='#F8F8F8', ec='#CCCCCC', alpha=0.9))
 
     if handles:
-        legend = ax.legend(handles=handles, loc='lower left', fontsize=12,
-                          framealpha=0.9, edgecolor='#555', facecolor='#1a1a2e',
-                          labelcolor='white', handlelength=2)
+        ax.legend(handles=handles, loc='lower left', fontsize=12,
+                  framealpha=0.95, edgecolor='#333', facecolor='white', handlelength=2)
 
-    # Add node name annotations below nodes
-    offset_y = -0.55
-    for n in ALL_NODES:
-        short = NODES[n].split('(')[0].split('Hub')[0].strip()
-        if len(short) > 12: short = short[:12]
-        ax.annotate(short, xy=NODE_POS[n], xytext=(0, offset_y),
-                   textcoords='offset fontsize', ha='center', va='top',
-                   fontsize=7.5, color='#999999', fontstyle='italic')
-
-    ax.set_title(title, fontsize=16, fontweight='bold', color='white', pad=20)
+    ax.set_title(title, fontsize=16, fontweight='bold', color='#2C3E50', pad=15)
     ax.axis('off')
     ax.margins(0.08)
     fig.tight_layout(pad=1.5)
