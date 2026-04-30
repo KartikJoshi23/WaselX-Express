@@ -60,8 +60,8 @@
 \begin{tcolorbox}[colback=WaselLight,colframe=WaselOrange,width=12cm,arc=6pt,boxrule=1.5pt]
 \centering\large
 \textbf{Group 3}\\[6pt]
-Kartik Joshi \quad$\bullet$\quad Gagandeep Singh\\[3pt]
-Samuel Alex \quad$\bullet$\quad Prem Kukreja
+ \quad$\bullet$\quad Kartik Joshi \quad$\bullet$\quad Gagandeep Singh\\[3pt]
+ \quad$\bullet$\quad Samuel Alex \quad$\bullet$\quad Prem Kukreja
 \end{tcolorbox}
 
 \vspace{1.5cm}
@@ -70,7 +70,7 @@ Masters in AI with Business (MAIB)\\[4pt]
 Data Structures and Algorithms}
 
 \vspace{1cm}
-{\large\textbf{April 2026}}
+{\large\textbf{May 2026}}
 
 \vfill
 {\color{WaselOrange}\rule{\textwidth}{3pt}}
@@ -97,9 +97,10 @@ WaselX Express processes 3{,}500 daily orders across a 15-node delivery network 
 \textbf{Implementation Roadmap:} Phase~1 (Months~1--2): Priority queue dispatch system (AED~400K). Phase~2 (Months~3--5): Dijkstra route optimization (AED~800K). Phase~3 (Months~6--8): AVL tree migration. \textbf{Total projected benefit: AED~2.5M/year} against AED~1.2M implementation cost (2.1$\times$ ROI, 6-month payback).
 
 % ═══════════════ TASK AREA A ═══════════════
+\newpage
 \section{Task Area A: Graph Modeling, Shortest Paths \& MST}
 
-\subsection{Q1 --- Graph Construction \textnormal{\small(10 Marks)}}
+\subsection{Q1 --- Graph Construction}
 
 The WaselX delivery network comprises \textbf{15 nodes} (7 hubs + 8 delivery zones) connected by \textbf{24 bidirectional edges}, each carrying three weights: distance (km), time (min), and cost (AED). Both adjacency list ($O(V\!+\!E)$ space) and adjacency matrix ($O(V^2)$ space) representations were implemented.
 
@@ -110,7 +111,7 @@ The WaselX delivery network comprises \textbf{15 nodes} (7 hubs + 8 delivery zon
 \label{fig:network}
 \end{figure}
 
-\subsection{Q2 --- Dijkstra's Algorithm: H1 $\rightarrow$ D1 \textnormal{\small(15 Marks)}}
+\subsection{Q2 --- Dijkstra's Algorithm: H1 $\rightarrow$ D1}
 
 Dijkstra's algorithm with a \textbf{from-scratch binary min-heap} computes the shortest path from Dubai Marina Hub (H1) to Downtown Dubai (D1). Result: direct route via Al Khail Rd at \textbf{8~km}, 15~min, 5.5~AED. Time complexity: $O((V\!+\!E)\log V)$ with $V\!=\!15$, $E\!=\!24$.
 
@@ -121,7 +122,7 @@ Dijkstra's algorithm with a \textbf{from-scratch binary min-heap} computes the s
 \label{fig:dijkstra}
 \end{figure}
 
-\subsection{Q3 --- Floyd-Warshall: Hub All-Pairs \textnormal{\small(15 Marks)}}
+\subsection{Q3 --- Floyd-Warshall: Hub All-Pairs}
 
 Floyd-Warshall at $O(V^3)$ computed all-pairs shortest travel times across all 15 nodes. The 7$\times$7 hub sub-matrix reveals that the Abu Dhabi cluster (H5, H6) is \textbf{completely disconnected} from the Dubai--Sharjah network.
 
@@ -132,7 +133,7 @@ Floyd-Warshall at $O(V^3)$ computed all-pairs shortest travel times across all 1
 \label{fig:floyd}
 \end{figure}
 
-\subsection{Q4 --- Minimum Spanning Tree \textnormal{\small(15 Marks)}}
+\subsection{Q4 --- Minimum Spanning Tree}
 
 Both Kruskal's (Union-Find with path compression) and Prim's algorithms produce the same MST cost. The disconnected topology yields a \textbf{Minimum Spanning Forest} with two components.
 
@@ -150,17 +151,17 @@ Both Kruskal's (Union-Find with path compression) and Prim's algorithms produce 
 \label{fig:mst}
 \end{figure}
 
-\subsection{Q5 --- CTO Memo: Dijkstra vs Floyd-Warshall \textnormal{\small(10 Marks)}}
+\subsection{Q5 --- CTO Memo: Dijkstra vs Floyd-Warshall}
 
 \begin{memobox}{MEMORANDUM --- TO: CTO, WaselX Express | FROM: Group 3 | RE: Algorithm Selection}
 For 3{,}500 daily source-to-destination routing queries, \textbf{Dijkstra's algorithm} at $O((V\!+\!E)\log V)$ per query is recommended as the real-time routing engine. Floyd-Warshall should be deployed as a \textbf{nightly batch job} for hub connectivity analytics at $O(V^3)$. At current network size ($V\!=\!15$), Floyd-Warshall's 3{,}375 operations are trivial; however, Dijkstra scales better if the network grows beyond 100 nodes.
 \end{memobox}
 
-\subsection{Q6 --- Interactive Path Visualizer \textnormal{\small(15 Marks)}}
+\subsection{Q6 --- Interactive Path Visualizer}
 
 A unified Streamlit application (\texttt{app.py}) was deployed with an interactive Q6 module supporting: source/destination selection, criterion-based optimization (distance/time/cost), and dual-path overlay visualization. Deployed at: \url{https://waselx-express.streamlit.app}
 
-\subsection{Q7 --- BFS and DFS from H3 \textnormal{\small(10 Marks)}}
+\subsection{Q7 --- BFS and DFS from H3}
 
 BFS and DFS traversals from Deira Hub (H3) confirmed that \textbf{11 of 15 nodes} are reachable (Abu Dhabi cluster is unreachable). BFS is recommended for fewest-stops express delivery due to its level-by-level exploration guaranteeing minimum hop count.
 
@@ -174,7 +175,7 @@ BFS and DFS traversals from Deira Hub (H3) confirmed that \textbf{11 of 15 nodes
 % ═══════════════ TASK AREA B ═══════════════
 \section{Task Area B: Trees, BST \& Balanced Trees}
 
-\subsection{Q8 --- Binary Search Tree \textnormal{\small(12 Marks)}}
+\subsection{Q8 --- Binary Search Tree}
 
 A BST was constructed by inserting 12 Order IDs in sequence: 1045, 1023, 1078, 1012, 1034, 1056, 1089, 1005, 1020, 1067, 1050, 1098. Deletion of Order~1078 (two-children case) was resolved using the in-order successor (1089).
 
@@ -192,7 +193,7 @@ A BST was constructed by inserting 12 Order IDs in sequence: 1045, 1023, 1078, 1
 \label{fig:bst}
 \end{figure}
 
-\subsection{Q9 --- AVL Tree \textnormal{\small(12 Marks)}}
+\subsection{Q9 --- AVL Tree}
 
 The same 12 Order IDs were inserted into an AVL tree with automatic LL, RR, LR, and RL rotations maintaining $|\text{balance factor}| \leq 1$. The resulting tree has maximum height 4, guaranteeing $O(\log n)$ operations.
 
@@ -203,7 +204,7 @@ The same 12 Order IDs were inserted into an AVL tree with automatic LL, RR, LR, 
 \label{fig:avl}
 \end{figure}
 
-\subsection{Q10 --- BST vs AVL vs Hash Table \textnormal{\small(10 Marks)}}
+\subsection{Q10 --- BST vs AVL vs Hash Table}
 
 \begin{table}[H]
 \centering
@@ -221,50 +222,52 @@ Stability & Degrades with sorted input & Always balanced & N/A \\
 \end{tabularx}
 \end{table}
 
-\subsection{Q11 --- Scaling to 15{,}000 Orders \textnormal{\small(8 Marks)}}
+\subsection{Q11 --- Scaling to 15{,}000 Orders}
 
 The sorted array bottleneck occurs at ${\sim}$8{,}000--10{,}000 active orders due to $O(n)$ insertion cost. Migration to AVL tree recommended with a three-phase shadow-index rollout: (1) parallel AVL build, (2) read verification, (3) write cutover.
 
 % ═══════════════ TASK AREA C ═══════════════
+\newpage
 \section{Task Area C: Linked Lists, Queues \& Order Pipeline}
 
-\subsection{Q12 --- Doubly Linked List \textnormal{\small(10 Marks)}}
+\subsection{Q12 --- Doubly Linked List}
 Rider delivery routes modeled as a DLL with $O(1)$ mid-route insertion/deletion, supporting forward and reverse traversal for route optimization and backtracking.
 
-\subsection{Q13 --- Circular Linked List \textnormal{\small(8 Marks)}}
+\subsection{Q13 --- Circular Linked List}
 Round-robin rider assignment using a circular linked list with 8 riders. Handles rider removal mid-rotation seamlessly, maintaining fair load distribution.
 
-\subsection{Q14 --- Priority Queue with Min-Heap \textnormal{\small(12 Marks)}}
+\subsection{Q14 --- Priority Queue with Min-Heap}
 From-scratch min-heap with \texttt{(priority, arrival\_index, order)} tuple keys ensuring \textbf{FIFO fairness} within equal-priority tiers. VIP Same-Hour orders dispatch before Economy, but two Economy orders with the same priority preserve arrival order.
 
-\subsection{Q15 --- Stack for Order Lifecycle \textnormal{\small(8 Marks)}}
+\subsection{Q15 --- Stack for Order Lifecycle}
 LIFO stack tracks order state transitions (Received $\rightarrow$ Processing $\rightarrow$ Dispatched $\rightarrow$ Delivered) with \texttt{undo()} capability for accidental status changes.
 
-\subsection{Q16 --- Dispatch Pipeline Design \textnormal{\small(10 Marks)}}
+\subsection{Q16 --- Dispatch Pipeline Design}
 Per-zone FIFO queues with priority pre-sort recommended over a single global queue. A priority escalation mechanism promotes starved orders after configurable wait thresholds.
 
-\subsection{Q17 --- Leadership Brief \textnormal{\small(10 Marks)}}
+\subsection{Q17 --- Leadership Brief}
 
 \begin{memobox}{TO: CEO | FROM: Head of Delivery Operations | RE: Priority Queue Implementation}
 The priority dispatch system addresses VIP customer churn (23\% of subscribers lost in Q4~2025). Proposed phased rollout: shadow mode (2~weeks) $\rightarrow$ H1 pilot (2~weeks) $\rightarrow$ full network (4~weeks). Projected impact: 15\% VIP recovery = \textbf{AED~315{,}000/year} in retained revenue. Total implementation cost: AED~400{,}000 with 15-month payback.
 \end{memobox}
 
 % ═══════════════ TASK AREA D ═══════════════
+\newpage
 \section{Task Area D: Sorting, Searching \& Divide and Conquer}
 
-\subsection{Q18 --- Merge Sort \& Quick Sort \textnormal{\small(12 Marks)}}
+\subsection{Q18 --- Merge Sort \& Quick Sort}
 Two-key sort (Zone alphabetical, Priority ascending) on 15 orders. Merge Sort preferred for \textbf{stability} --- preserving FIFO arrival order within identical sort keys.
 
-\subsection{Q19 --- Binary Search vs Linear Search \textnormal{\small(10 Marks)}}
+\subsection{Q19 --- Binary Search vs Linear Search}
 Binary Search finds Order~10347 in ${\sim}$10 comparisons versus 347 for Linear Search. At 500 daily customer support lookups: \textbf{96\% reduction} in total comparisons (5{,}000 vs 250{,}000).
 
-\subsection{Q20 --- Peak Hour Detection \textnormal{\small(10 Marks)}}
+\subsection{Q20 --- Peak Hour Detection}
 Divide-and-conquer approach correctly identifies peak ordering hour from 6{,}000 Ramadan orders. Honest assessment: both D\&C and linear scan are $O(n)$ for this problem --- D\&C provides no speedup when every element must be examined.
 
-\subsection{Q21 --- Sorting Recommendation \textnormal{\small(8 Marks)}}
+\subsection{Q21 --- Sorting Recommendation}
 \textbf{Merge Sort} recommended for nightly batch job (50{,}000 partially-sorted records): guaranteed $O(n\log n)$, stable, and naturally suited to pre-sorted runs within zones. Quick Sort's $O(n^2)$ worst case on partially-sorted data is unacceptable for production SLAs.
 
-\subsection{Q22 --- Sorting Performance Simulation \textnormal{\small(10 Marks)}}
+\subsection{Q22 --- Sorting Performance Simulation}
 
 \begin{figure}[H]
 \centering
@@ -274,24 +277,25 @@ Divide-and-conquer approach correctly identifies peak ordering hour from 6{,}000
 \end{figure}
 
 % ═══════════════ TASK AREA E ═══════════════
+\newpage
 \section{Task Area E: Management, Leadership \& Strategy}
 
-\subsection{Q23 --- Executive Summary \textnormal{\small(12 Marks)}}
+\subsection{Q23 --- Executive Summary}
 See Section~1 for the complete 400--500 word executive summary covering all three operational problems, DSA solutions, cost impact analysis, and phased implementation roadmap.
 
-\subsection{Q24 --- Dual-Audience Communication \textnormal{\small(10 Marks)}}
+\subsection{Q24 --- Dual-Audience Communication}
 Route optimization explained for the \textbf{board} (analogy-driven: ``GPS that memorized every route'', focus on AED savings) and the \textbf{engineering team} ($O((V\!+\!E)\log V)$ complexity, adjacency list representation, lazy deletion in min-heap). Reflection on calibrating technical detail to audience decision-making needs.
 
-\subsection{Q25 --- Investment Memo \textnormal{\small(10 Marks)}}
+\subsection{Q25 --- Investment Memo}
 
 \begin{memobox}{DECISION MEMO --- TO: Executive Committee | RE: 2026 Technology Investment}
 \textbf{Recommendation: Investment B} (Priority Queue, AED~400K) over Investment A (Route Optimization, AED~800K). Both deliver 50\% first-year ROI, but Investment B requires \textbf{half the capital}, has fewer integration dependencies (software-only vs GPS hardware), and directly addresses the most urgent competitive threat: VIP churn to Talabat and Noon Minutes. Deploy B in Q1, fund A from realized savings in Q3.
 \end{memobox}
 
-\subsection{Q26 --- Town Hall Response \textnormal{\small(10 Marks)}}
+\subsection{Q26 --- Town Hall Response}
 Response to ``Why not Google Maps?'' --- three strategic factors: (1) \textbf{Cost}: AED~790K/year at 15K orders/day vs near-zero for in-house; (2) \textbf{Customization}: Google cannot factor in priority tiers, rider capacity, or zone congestion; (3) \textbf{Data ownership}: route patterns are competitive assets. Principle: own algorithms that differentiate, rent commodities that don't.
 
-\subsection{Q27 --- Comprehensive Path Simulator \textnormal{\small(15 Marks)}}
+\subsection{Q27 --- Comprehensive Path Simulator}
 
 Multi-criteria optimization (distance/time/cost) with dynamic road closure simulation. Deployed as the Q27 module in the unified Streamlit app.
 
@@ -303,6 +307,7 @@ Multi-criteria optimization (distance/time/cost) with dynamic road closure simul
 \end{figure}
 
 % ═══════════════ SIMULATION ═══════════════
+\newpage
 \section{Simulation Documentation}
 
 A unified Streamlit application (\texttt{app.py}) was developed with three modules:
@@ -340,6 +345,7 @@ Q27: Path Simulator & Multi-criteria optimization, road closure toggle, delta an
 This project demonstrates that well-chosen data structures and algorithms directly address WaselX Express's three critical challenges. Dijkstra's algorithm provides sub-millisecond route optimization, the AVL tree guarantees consistent $O(\log n)$ order lookup at scale, and the priority queue dispatch system ensures VIP customers receive service commensurate with their revenue contribution. The projected \textbf{AED~2.5M annual benefit} against AED~1.2M implementation cost makes this a compelling technology investment with clear competitive advantages in the UAE last-mile delivery market.
 
 % ═══════════════ REFERENCES ═══════════════
+\newpage
 \section*{References}
 \addcontentsline{toc}{section}{References}
 
