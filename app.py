@@ -172,7 +172,7 @@ def make_graph(paths_data=None, blocked=None, title="WaselX Express Network", he
         textfont=dict(size=13, color='white', family='Arial Black'),
         marker=dict(size=hsz, color='#E67E22', line=dict(width=3, color='#2C3E50'),
                     symbol='circle'),
-        hovertext=ht, hoverinfo='text', name='Hubs', showlegend=True
+        hovertext=ht, hoverinfo='text', name='Hubs', showlegend=False
     ))
 
     # --- Zone nodes ---
@@ -186,16 +186,16 @@ def make_graph(paths_data=None, blocked=None, title="WaselX Express Network", he
         textfont=dict(size=12, color='white', family='Arial Black'),
         marker=dict(size=dsz, color='#1ABC9C', line=dict(width=3, color='#2C3E50'),
                     symbol='circle'),
-        hovertext=dt, hoverinfo='text', name='Zones', showlegend=True
+        hovertext=dt, hoverinfo='text', name='Zones', showlegend=False
     ))
 
     fig.update_layout(
-        title=dict(text=title, font=dict(size=18, color='#2C3E50'), x=0.5),
+        title=dict(text=f'<b>{title}</b>', font=dict(size=18, color='#2C3E50'), x=0.5, xanchor='center'),
         plot_bgcolor='#FAFBFC', paper_bgcolor='#FAFBFC',
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, scaleanchor='y'),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        height=height, margin=dict(l=20,r=20,t=60,b=20),
-        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='center', x=0.5,
+        height=height, margin=dict(l=20,r=20,t=80,b=60),
+        legend=dict(orientation='h', yanchor='top', y=-0.02, xanchor='center', x=0.5,
                     font=dict(size=12), bgcolor='rgba(255,255,255,0.9)'),
         hoverlabel=dict(bgcolor='white', font_size=13, font_family='Arial'),
         dragmode='pan'
