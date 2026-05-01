@@ -1,0 +1,122 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WaselX Express — Delivery Network Simulator</title>
+<meta name="description" content="WaselX Express DSA delivery network simulator with Dijkstra shortest path and road closure analysis">
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
+body{background:#080b16;color:#cbd5e1;min-height:100vh;overflow-x:hidden}
+.orb{position:fixed;border-radius:50%;filter:blur(120px);opacity:.1;pointer-events:none;animation:fl 14s ease-in-out infinite}
+.orb-1{width:500px;height:500px;background:#7c3aed;top:-10%;left:-5%}
+.orb-2{width:400px;height:400px;background:#06b6d4;bottom:-10%;right:-5%;animation-delay:-7s}
+@keyframes fl{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(40px) scale(1.08)}}
+header{background:rgba(12,15,30,.7);backdrop-filter:blur(20px);border-bottom:1px solid rgba(139,92,246,.12);padding:16px 40px;display:flex;align-items:center;gap:20px;position:sticky;top:0;z-index:100}
+.logo{font-size:1.5rem;font-weight:900;background:linear-gradient(135deg,#a78bfa,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr-meta{color:#64748b;font-size:.8rem;margin-left:auto;text-align:right}
+nav{display:flex;gap:4px;background:rgba(15,18,35,.6);backdrop-filter:blur(12px);border-radius:12px;padding:4px;border:1px solid rgba(139,92,246,.1);margin:20px 40px 0}
+nav button{padding:10px 24px;border:none;background:none;color:#94a3b8;border-radius:10px;font-weight:600;cursor:pointer;transition:all .3s;font-size:.9rem}
+nav button:hover{background:rgba(139,92,246,.1);color:#c4b5fd}
+nav button.active{background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(6,182,212,.15));color:#e0e7ff;box-shadow:0 0 20px rgba(139,92,246,.15)}
+.container{max-width:1200px;margin:0 auto;padding:20px 40px 60px}
+h1{font-size:2rem;font-weight:900;background:linear-gradient(135deg,#a78bfa,#818cf8,#06b6d4);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gr 5s ease infinite;margin:20px 0 8px}
+@keyframes gr{0%,100%{background-position:0% center}50%{background-position:100% center}}
+h2{color:#c4b5fd;font-size:1.3rem;margin:24px 0 12px}
+.sub{color:#94a3b8;margin-bottom:16px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:20px 0}
+.metric{background:rgba(139,92,246,.06);backdrop-filter:blur(12px);border-radius:14px;padding:20px;border:1px solid rgba(139,92,246,.12);transition:transform .3s,box-shadow .3s}
+.metric:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(139,92,246,.15)}
+.metric .label{color:#94a3b8;font-size:.85rem;margin-bottom:4px}.metric .val{color:#fff;font-size:2rem;font-weight:700}
+.card{background:rgba(139,92,246,.05);backdrop-filter:blur(16px);border-radius:14px;padding:20px;margin:12px 0;border:1px solid rgba(139,92,246,.12);border-left:4px solid #8b5cf6;transition:transform .3s}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(139,92,246,.12)}
+.graph-wrap{border-radius:14px;overflow:hidden;margin:16px 0;border:1px solid rgba(139,92,246,.08)}
+.form-row{display:flex;gap:16px;flex-wrap:wrap;margin:16px 0}
+.form-group{flex:1;min-width:200px}
+.form-group label{display:block;color:#94a3b8;font-size:.85rem;margin-bottom:6px;font-weight:600}
+.form-group select,.form-group input{width:100%;padding:10px 14px;background:rgba(15,18,35,.8);border:1px solid rgba(139,92,246,.15);border-radius:10px;color:#e0e7ff;font-size:.9rem;outline:none;transition:border .3s}
+.form-group select:focus{border-color:#8b5cf6}
+.btn{padding:12px 32px;background:linear-gradient(135deg,#7c3aed,#6366f1);border:none;border-radius:12px;color:#fff;font-weight:700;font-size:1rem;cursor:pointer;width:100%;transition:all .3s;box-shadow:0 4px 15px rgba(124,58,237,.3)}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(124,58,237,.4)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+table{width:100%;border-collapse:collapse;margin:12px 0}
+th{background:rgba(139,92,246,.1);color:#c4b5fd;padding:10px 16px;text-align:left;font-size:.85rem}
+td{padding:10px 16px;border-bottom:1px solid rgba(139,92,246,.06);font-size:.9rem}
+.page{display:none}.page.active{display:block}
+hr{border:none;border-top:1px solid rgba(139,92,246,.1);margin:16px 0}
+.chk-row{display:flex;align-items:center;gap:8px;margin:8px 0}
+.chk-row input[type=checkbox]{accent-color:#8b5cf6;width:16px;height:16px}
+.info-box{background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.15);border-radius:12px;padding:14px 18px;margin:12px 0;color:#94a3b8}
+@media(max-width:768px){.metrics{grid-template-columns:1fr 1fr}.compare{grid-template-columns:1fr}nav{margin:12px 16px 0}.container{padding:16px}header{padding:12px 16px}}
+</style></head><body>
+<div class="orb orb-1"></div><div class="orb orb-2"></div>
+<header><span class="logo">🚚 WaselX Express</span><div class="hdr-meta">DSA Final Project · Group 3 · SP Jain MAIB<br>Kartik Joshi · Gagandeep Singh · Samuel Alex · Prem Kukreja</div></header>
+<nav id="nav"><button class="active" onclick="show('overview')">🏠 Overview</button><button onclick="show('q6')">🗺️ Q6: Path Visualizer</button><button onclick="show('q27')">🛣️ Q27: Path Simulator</button></nav>
+<div class="container">
+<!-- OVERVIEW -->
+<div id="overview" class="page active">
+<h1>🚚 WaselX Express — Delivery Network Simulator</h1>
+<p class="sub">Optimizing Last-Mile Delivery Across the UAE Using DSA</p><hr>
+<div class="metrics"><div class="metric"><div class="label">🏢 Nodes</div><div class="val">15</div></div><div class="metric"><div class="label">🛤️ Edges</div><div class="val">24</div></div><div class="metric"><div class="label">📦 Hubs</div><div class="val">7</div></div><div class="metric"><div class="label">📍 Zones</div><div class="val">8</div></div></div>
+<div class="graph-wrap"><div id="g-overview"></div></div>
+<div class="info-box">⚠️ <b>Two disconnected components:</b> Dubai-Sharjah cluster (H1-H4, H7, D1-D5, D8) and Abu Dhabi cluster (H5, H6, D6, D7).</div>
+</div>
+<!-- Q6 -->
+<div id="q6" class="page">
+<h1>🗺️ Q6 — Interactive Shortest Path Visualizer</h1>
+<p class="sub">Dijkstra's shortest path with dual-path overlay. Zoom, pan, and hover for details.</p><hr>
+<div class="form-row"><div class="form-group"><label>Source (Path 1)</label><select id="q6s1"></select></div><div class="form-group"><label>Destination (Path 1)</label><select id="q6d1"></select></div><div class="form-group"><label>Criterion</label><select id="q6c1"><option>Distance (km)</option><option>Time (min)</option><option>Cost (AED)</option></select></div></div>
+<div class="chk-row"><input type="checkbox" id="q6en2"><label for="q6en2">Enable second path overlay</label></div>
+<div class="form-row" id="q6p2" style="display:none"><div class="form-group"><label>Source (Path 2)</label><select id="q6s2"></select></div><div class="form-group"><label>Destination (Path 2)</label><select id="q6d2"></select></div><div class="form-group"><label>Criterion</label><select id="q6c2"><option>Distance (km)</option><option>Time (min)</option><option>Cost (AED)</option></select></div></div>
+<button class="btn" onclick="runQ6()">🔍 Compute Shortest Paths</button>
+<div id="q6result"></div><div class="graph-wrap"><div id="g-q6"></div></div>
+</div>
+<!-- Q27 -->
+<div id="q27" class="page">
+<h1>🛣️ Q27 — Comprehensive Path Simulator</h1>
+<p class="sub">Multi-criteria optimization with dynamic road closure. Interactive graphs.</p><hr>
+<div class="form-row"><div class="form-group"><label>Source</label><select id="q27s"></select></div><div class="form-group"><label>Destination</label><select id="q27d"></select></div><div class="form-group"><label>Criterion</label><select id="q27c"><option>Distance (km)</option><option>Time (min)</option><option>Cost (AED)</option></select></div></div>
+<h2>🚧 Road Closure</h2>
+<div class="form-row"><div class="form-group"><label>Block an edge</label><select id="q27cl"><option>None</option></select></div></div>
+<button class="btn" onclick="runQ27()">🚀 Compute Optimal Paths</button>
+<div id="q27result"></div><div class="graph-wrap"><div id="g-q27a"></div></div><div class="compare"><div class="graph-wrap"><div id="g-q27b"></div></div><div class="graph-wrap"><div id="g-q27c"></div></div></div>
+</div>
+</div>
+<script>
+const NODES={H1:'Dubai Marina Hub',H2:'Business Bay Hub',H3:'Deira Hub',H4:'JLT Hub',H5:'Abu Dhabi Corniche Hub',H6:'Khalifa City Hub',H7:'Sharjah Al Nahda Hub',D1:'Downtown Dubai',D2:'Al Quoz Industrial',D3:'Jumeirah',D4:'Silicon Oasis',D5:'Ajman City Centre',D6:'Yas Island',D7:'Al Reem Island',D8:'Muwaileh'};
+const EDGES=[['H1','H4','Sheikh Zayed Rd',5,10,3.5],['H1','D3','Jumeirah Beach Rd',4,12,3],['H1','D1','Al Khail Rd',8,15,5.5],['H4','D2','Hessa St',6,14,4],['H4','H2','Sheikh Zayed Rd',7,13,5],['H2','D1','Financial Centre Rd',3,8,2.5],['H2','H3','Al Maktoum Bridge',9,18,6],['H3','D4','Dubai-Al Ain Rd',12,22,8],['H3','H7','Emirates Rd',15,25,10],['H7','D8','University Rd',4,8,3],['H7','D5','Sheikh Mohammed Rd',10,18,7],['D1','D3','2nd December St',5,11,3.5],['D1','D2','Al Khail Rd',6,13,4],['D2','D4','Hatta Rd',10,20,7],['H5','D7','Corniche Rd',6,12,4],['H5','H6','Abu Dhabi Ring Rd',14,20,9],['H6','D6','Yas Connector',8,15,5.5],['D6','D7','Al Saadiyat Bridge',7,13,5],['H5','D6','Island Bypass',12,22,8],['D4','D8','Academic City Rd',18,30,12],['H3','D2','Al Asayel St',8,16,5.5],['H1','H2','Happiness St',10,18,7],['D5','D8','Sharjah Ring Rd',8,15,5.5],['H6','D7','Reem Bridge',10,18,7]];
+const POS={H1:[1,6],H2:[4,5.5],H3:[7,7],H4:[2.5,8],H5:[-5,2],H6:[-3,.5],H7:[10,8],D1:[3,4],D2:[4.5,3],D3:[1.5,4],D4:[8,3],D5:[12,9],D6:[-4,-1],D7:[-6,2.5],D8:[11,5]};
+const AN=Object.keys(NODES).sort();
+const CI={'Distance (km)':0,'Time (min)':1,'Cost (AED)':2};
+function buildAdj(bl){let a={};AN.forEach(n=>a[n]=[]);EDGES.forEach(([u,v,r,d,t,c])=>{if(bl&&((bl[0]==u&&bl[1]==v)||(bl[0]==v&&bl[1]==u)))return;a[u].push([v,d,t,c]);a[v].push([u,d,t,c])});return a}
+function dijkstra(adj,s,d,wi){let INF=1e18,dist={},prev={};AN.forEach(n=>{dist[n]=INF;prev[n]=null});dist[s]=0;let vis=new Set(),hp=[[0,s]];while(hp.length){hp.sort((a,b)=>a[0]-b[0]);let[dd,u]=hp.shift();if(vis.has(u))continue;vis.add(u);if(u===d)break;for(let[nb,...w]of adj[u]){let nd=dist[u]+w[wi];if(nd<dist[nb]){dist[nb]=nd;prev[nb]=u;hp.push([nd,nb])}}}let p=[],n=d;while(n){p.push(n);n=prev[n]}p.reverse();return dist[d]<INF?[p,dist[d]]:[[],INF]}
+function pcosts(p,adj){let d=0,t=0,c=0;for(let i=0;i<p.length-1;i++)for(let[nb,dd,tt,cc]of adj[p[i]])if(nb===p[i+1]){d+=dd;t+=tt;c+=cc;break}return[d,t,c]}
+function mkGraph(el,pdata,blocked,title,h){
+let traces=[],ann=[];if(!pdata)pdata=[];
+let pes=new Set(),pns=new Set();
+pdata.forEach(pd=>{let p=pd.path;for(let i=0;i<p.length-1;i++){pes.add(p[i]+'-'+p[i+1]);pes.add(p[i+1]+'-'+p[i])}p.forEach(n=>pns.add(n))});
+EDGES.forEach(([u,v,r,d,t,c])=>{if(blocked&&((blocked[0]==u&&blocked[1]==v)||(blocked[0]==v&&blocked[1]==u)))return;if(pes.has(u+'-'+v))return;let[x0,y0]=POS[u],[x1,y1]=POS[v];traces.push({x:[x0,x1,null],y:[y0,y1,null],mode:'lines',line:{width:2,color:'rgba(100,116,160,.3)'},hoverinfo:'skip',showlegend:false});ann.push({x:(x0+x1)/2,y:(y0+y1)/2,text:'<b>'+d+'km</b>',showarrow:false,font:{size:9,color:'rgba(148,163,184,.6)'},bgcolor:'rgba(8,11,22,.7)',borderpad:2})});
+if(blocked&&POS[blocked[0]]&&POS[blocked[1]]){let[x0,y0]=POS[blocked[0]],[x1,y1]=POS[blocked[1]];traces.push({x:[x0,x1],y:[y0,y1],mode:'lines+markers',line:{width:4,color:'#ef4444',dash:'dash'},marker:{size:18,symbol:'x',color:'#ef4444'},name:'Blocked: '+blocked[0]+'-'+blocked[1],showlegend:true})}
+let cols=['#a78bfa','#22d3ee','#34d399'];
+pdata.forEach((pd,idx)=>{let p=pd.path,col=cols[idx%3];if(p.length<2)return;let ex=[],ey=[];for(let i=0;i<p.length-1;i++){let[x0,y0]=POS[p[i]],[x1,y1]=POS[p[i+1]];ex.push(x0,x1,null);ey.push(y0,y1,null);EDGES.forEach(([u,v,r,d])=>{if((u==p[i]&&v==p[i+1])||(v==p[i]&&u==p[i+1]))ann.push({x:(x0+x1)/2,y:(y0+y1)/2,text:'<b>'+d+'km</b>',showarrow:false,font:{size:11,color:col},bgcolor:'rgba(8,11,22,.9)',borderpad:3,bordercolor:col,borderwidth:1})})}traces.push({x:ex,y:ey,mode:'lines',line:{width:6,color:col},name:pd.label,showlegend:true})});
+[['H','#8b5cf6'],['D','#06b6d4']].forEach(([g,col])=>{let ns=AN.filter(n=>n[0]==g),nx=ns.map(n=>POS[n][0]),ny=ns.map(n=>POS[n][1]),sz=ns.map(n=>pns.has(n)?28:22);traces.push({x:nx,y:ny,mode:'markers+text',text:ns,textposition:'middle center',textfont:{size:12,color:'white',family:'Arial Black'},marker:{size:sz,color:col,line:{width:2,color:'rgba(255,255,255,.3)'}},hovertext:ns.map(n=>'<b>'+n+'</b><br>'+NODES[n]),hoverinfo:'text',showlegend:false})});
+Plotly.newPlot(el,traces,{title:{text:'<b>'+title+'</b>',font:{size:17,color:'#c4b5fd'},x:.5,xanchor:'center'},plot_bgcolor:'rgba(8,11,22,.5)',paper_bgcolor:'rgba(8,11,22,.5)',xaxis:{showgrid:false,zeroline:false,showticklabels:false,scaleanchor:'y'},yaxis:{showgrid:false,zeroline:false,showticklabels:false},height:h||680,margin:{l:10,r:10,t:70,b:50},legend:{orientation:'h',yanchor:'top',y:-.02,xanchor:'center',x:.5,font:{size:12,color:'#c4b5fd'},bgcolor:'rgba(8,11,22,.8)'},hoverlabel:{bgcolor:'#1e1b4b',font:{size:13,family:'Inter',color:'#e0e7ff'}},dragmode:'pan',annotations:ann},{responsive:true,scrollZoom:true})}
+function show(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach((b,i)=>{b.classList.toggle('active',['overview','q6','q27'][i]===id)});if(id==='overview')mkGraph('g-overview',null,null,'Full Network — 15 Nodes, 24 Edges',680)}
+function populateSelects(){let sels=['q6s1','q6d1','q6s2','q6d2','q27s','q27d'];sels.forEach(id=>{let s=document.getElementById(id);AN.forEach(n=>{let o=document.createElement('option');o.value=n;o.text=n+' — '+NODES[n];s.add(o)})});document.getElementById('q6d1').value='D4';document.getElementById('q6s2').value='H3';document.getElementById('q6d2').value='D3';document.getElementById('q27d').value='D4';let cl=document.getElementById('q27cl');EDGES.forEach(([u,v,r])=>{let o=document.createElement('option');o.value=u+','+v;o.text=u+' — '+v+' ('+r+')';cl.add(o)})}
+document.getElementById('q6en2').addEventListener('change',e=>{document.getElementById('q6p2').style.display=e.target.checked?'flex':'none'});
+function runQ6(){let adj=buildAdj(),s1=document.getElementById('q6s1').value,d1=document.getElementById('q6d1').value,c1=CI[document.getElementById('q6c1').value],pdata=[],html='';
+let[p1,v1]=dijkstra(adj,s1,d1,c1);if(p1.length>1){let[dd,tt,cc]=pcosts(p1,adj);pdata.push({path:p1,label:'Path 1: '+s1+'→'+d1+' ('+dd+'km, '+tt+'min, '+cc+'AED)'});html+='<div class="card">✅ <b>Path 1:</b> '+p1.join(' → ')+'<br>📏 '+dd+' km | ⏱️ '+tt+' min | 💰 '+cc+' AED</div>'}else html+='<div class="card">❌ No path from '+s1+' to '+d1+'</div>';
+if(document.getElementById('q6en2').checked){let s2=document.getElementById('q6s2').value,d2=document.getElementById('q6d2').value,c2=CI[document.getElementById('q6c2').value];let[p2]=dijkstra(adj,s2,d2,c2);if(p2.length>1){let[dd,tt,cc]=pcosts(p2,adj);pdata.push({path:p2,label:'Path 2: '+s2+'→'+d2+' ('+dd+'km, '+tt+'min, '+cc+'AED)'});html+='<div class="card">✅ <b>Path 2:</b> '+p2.join(' → ')+'<br>📏 '+dd+' km | ⏱️ '+tt+' min | 💰 '+cc+' AED</div>'}}
+document.getElementById('q6result').innerHTML=html;if(pdata.length)mkGraph('g-q6',pdata,null,'Q6 — Shortest Path Visualization',680)}
+function runQ27(){let src=document.getElementById('q27s').value,dst=document.getElementById('q27d').value,crit=document.getElementById('q27c').value,wi=CI[crit],clv=document.getElementById('q27cl').value,blocked=clv!=='None'?clv.split(','):null,adj_o=buildAdj(),adj_c=blocked?buildAdj(blocked):null,html='';
+html+='<h2>📊 Multi-Criteria Comparison</h2><table><tr><th>Criterion</th><th>Path</th><th>Distance</th><th>Time</th><th>Cost</th></tr>';
+let paths={};for(let[cn,ci] of Object.entries(CI)){let[p]=dijkstra(adj_o,src,dst,ci);if(p.length>1){let[d,t,c]=pcosts(p,adj_o);paths[cn]=p.join(' → ');html+='<tr><td>'+cn+'</td><td>'+p.join(' → ')+'</td><td>'+d+' km</td><td>'+t+' min</td><td>'+c+' AED</td></tr>'}else{paths[cn]='NO PATH';html+='<tr><td>'+cn+'</td><td>NO PATH</td><td>-</td><td>-</td><td>-</td></tr>'}}html+='</table>';
+let uq=new Set(Object.values(paths).filter(v=>v!=='NO PATH'));if(uq.size>1)html+='<div class="info-box">⚠️ Different criteria produce <b>different</b> optimal paths!</div>';
+else if(uq.size===1)html+='<div class="info-box">✅ All criteria produce the <b>same</b> optimal path.</div>';
+document.getElementById('g-q27b').innerHTML='';document.getElementById('g-q27c').innerHTML='';document.getElementById('g-q27a').innerHTML='';
+if(blocked&&adj_c){let[po]=dijkstra(adj_o,src,dst,wi),[pc]=dijkstra(adj_c,src,dst,wi);let d1=0,t1=0,c1=0;if(po.length>1)[d1,t1,c1]=pcosts(po,adj_o);
+if(pc.length>1){let[d2,t2,c2]=pcosts(pc,adj_c);html+='<h2>🚧 Road Closure: '+blocked[0]+' — '+blocked[1]+'</h2>';html+='<div class="card">🔄 <b>Rerouted:</b> '+pc.join(' → ')+'<br>📏 '+d2+'km | ⏱️ '+t2+'min | 💰 '+c2+'AED</div>';
+if(d1>0)html+='<table><tr><th>Metric</th><th>Original</th><th>Rerouted</th><th>Delta</th></tr><tr><td>Distance</td><td>'+d1+'</td><td>'+d2+'</td><td>+'+(d2-d1)+'</td></tr><tr><td>Time</td><td>'+t1+'</td><td>'+t2+'</td><td>+'+(t2-t1)+'</td></tr><tr><td>Cost</td><td>'+c1+'</td><td>'+c2+'</td><td>+'+(c2-c1).toFixed(1)+'</td></tr></table>';
+html+='<h2>🗺️ Visual Comparison</h2>';document.getElementById('q27result').innerHTML=html;
+mkGraph('g-q27b',[{path:po,label:'Original: '+d1+'km'}],null,'Original: '+po.join(' → '),580);mkGraph('g-q27c',[{path:pc,label:'Rerouted: '+d2+'km'}],blocked,'Rerouted: '+pc.join(' → '),580)}else{html+='<div class="card">❌ No alternative path!</div>';document.getElementById('q27result').innerHTML=html}}
+else{let[pm]=dijkstra(adj_o,src,dst,wi);if(pm.length>1){let[dd,tt,cc]=pcosts(pm,adj_o);html+='<div class="card">✅ <b>Optimal:</b> '+pm.join(' → ')+'<br>📏 '+dd+'km | ⏱️ '+tt+'min | 💰 '+cc+'AED</div>';document.getElementById('q27result').innerHTML=html;mkGraph('g-q27a',[{path:pm,label:crit+': '+pm.join(' → ')}],null,'Q27 — Optimal Path by '+crit,680)}else document.getElementById('q27result').innerHTML=html}}
+populateSelects();show('overview');
+</script></body></html>
