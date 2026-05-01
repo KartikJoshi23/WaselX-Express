@@ -1,14 +1,14 @@
-"""Regenerate ALL 11 figures at production quality."""
+"""Regenerate ALL 11 figures matching Streamlit Plotly style."""
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import networkx as nx
 import numpy as np
-import pandas as pd
-import random, time, math
+import random, time, sys
 
-plt.rcParams.update({'font.size':13,'axes.titlesize':16,'axes.labelsize':13,'figure.dpi':200})
+plt.rcParams.update({'font.size':12,'axes.titlesize':16,'figure.dpi':150,
+                     'font.family':'sans-serif'})
 
 NODES={'H1':'Dubai Marina Hub','H2':'Business Bay Hub','H3':'Deira Hub','H4':'JLT Hub',
        'H5':'Abu Dhabi Corniche Hub','H6':'Khalifa City Hub','H7':'Sharjah Al Nahda Hub',
@@ -31,74 +31,10 @@ POS={'H1':(1,6),'H2':(4,5.5),'H3':(7,7),'H4':(2.5,8),'H5':(-5,2),'H6':(-3,0.5),
      'D5':(12,9),'D6':(-4,-1),'D7':(-6,2.5),'D8':(11,5)}
 AN=sorted(NODES.keys())
 HUBS=[n for n in AN if n.startswith('H')]
-
-def build_adj(blocked=None):
-    a={n:[] for n in AN}
-    for u,v,r,d,t,c in EDGES:
-        if blocked and ((u,v)==blocked or (v,u)==blocked): continue
-        a[u].append((v,d,t,c)); a[v].append((u,d,t,c))
-    return a
-
-def base_graph(blocked=None):
-    G=nx.Graph()
-    for n in AN: G.add_node(n)
-    for u,v,r,d,t,c in EDGES:
-        if blocked and ((u,v)==blocked or (v,u)==blocked): continue
-        G.add_edge(u,v,dist=d,time=t,cost=c)
-    return G
-
-def draw_base(ax,G,highlight_edges=None,highlight_color='#E74C3C',highlight_width=5,
-              blocked=None,edge_label_key='dist',title=''):
-    # White background for report
-    ax.set_facecolor('white')
-    # Base edges
-    other=list(G.edges())
-    if highlight_edges:
-        he_set=set(highlight_edges)|set((v,u) for u,v in highlight_edges)
-        other=[(u,v) for u,v in G.edges() if (u,v) not in he_set and (v,u) not in he_set]
-    nx.draw_networkx_edges(G,POS,edgelist=other,ax=ax,edge_color='#BBBBBB',width=1.8,alpha=0.6)
-    if highlight_edges:
-        nx.draw_networkx_edges(G,POS,edgelist=highlight_edges,ax=ax,
-                               edge_color=highlight_color,width=highlight_width,alpha=0.9)
-    if blocked:
-        ax.plot([POS[blocked[0]][0],POS[blocked[1]][0]],
-                [POS[blocked[0]][1],POS[blocked[1]][1]],
-                'X--',color='red',linewidth=3,markersize=18)
-    # Nodes
-    hub_n=[n for n in G.nodes if n.startswith('H')]
-    dz_n=[n for n in G.nodes if n.startswith('D')]
-    path_nodes=set()
-    if highlight_edges:
-        for u,v in highlight_edges: path_nodes.add(u); path_nodes.add(v)
-    for n in G.nodes:
-        in_p=n in path_nodes
-        if n.startswith('H'):
-            col='#D35400' if in_p else '#E67E22'
-            sz=1100 if in_p else 900
-        else:
-            col='#E74C3C' if in_p else '#1ABC9C'
-            sz=900 if in_p else 700
-        nx.draw_networkx_nodes(G,POS,nodelist=[n],ax=ax,node_color=col,node_size=sz,
-                               edgecolors='#2C3E50',linewidths=2.5)
-    # Labels inside nodes - LARGE
-    nx.draw_networkx_labels(G,POS,ax=ax,font_size=12,font_weight='bold',font_color='white')
-    # Edge labels
-    if edge_label_key:
-        el={}
-        for u,v in G.edges():
-            d=G[u][v].get(edge_label_key,0)
-            unit='km' if edge_label_key=='dist' else ('min' if edge_label_key=='time' else 'AED')
-            el[(u,v)]=f"{d}{unit}"
-        nx.draw_networkx_edge_labels(G,POS,edge_labels=el,ax=ax,font_size=9,font_color='#555555',
-                                      bbox=dict(boxstyle='round,pad=0.2',fc='#F8F8F8',ec='#CCCCCC',alpha=0.9))
-    ax.set_title(title,fontsize=16,fontweight='bold',color='#2C3E50',pad=15)
-    ax.axis('off')
-    ax.margins(0.08)
-
-def save(fig,name):
-    fig.savefig(name,dpi=150,bbox_inches='tight',facecolor='white',edgecolor='none')
-    plt.close(fig)
-    print(f'  Saved: {name}')
+BG='#FAFBFC'
+HUB_COL='#E67E22'; ZONE_COL='#1ABC9C'; BORDER='#2C3E50'
+EDGE_COL='rgba(150,150,170,0.4)'
+PATH_COLS=['#E74C3C','#2980B9','#27AE60']
 
 class MinHeap:
     def __init__(self): self.h=[]
@@ -120,6 +56,13 @@ class MinHeap:
         return r
     def empty(self): return len(self.h)==0
 
+def build_adj(blocked=None):
+    a={n:[] for n in AN}
+    for u,v,r,d,t,c in EDGES:
+        if blocked and ((u,v)==blocked or (v,u)==blocked): continue
+        a[u].append((v,d,t,c)); a[v].append((u,d,t,c))
+    return a
+
 def dijkstra(adj,src,dst,wi):
     INF=float('inf');dist={n:INF for n in adj};prev={n:None for n in adj}
     dist[src]=0;vis=set();hp=MinHeap();hp.push((0,src))
@@ -136,27 +79,88 @@ def dijkstra(adj,src,dst,wi):
     path.reverse()
     return (path,dist[dst]) if dist[dst]<INF else ([],INF)
 
-# ═══════════════════════════════════════════════════════════
-print("Regenerating all figures...")
+def draw_graph(ax, highlight_edges=None, highlight_color='#E74C3C', blocked=None,
+               edge_label_key='dist', title='', path_nodes=None):
+    """Draw graph matching Plotly Streamlit style."""
+    ax.set_facecolor(BG)
+    if path_nodes is None: path_nodes=set()
+    if highlight_edges is None: highlight_edges=[]
 
-# 1. graph_network_full.png
-print("\n1. Full network graph")
-fig,ax=plt.subplots(figsize=(18,12),facecolor='white')
-G=base_graph()
-draw_base(ax,G,title='WaselX Express — Full Delivery Network (15 Nodes, 24 Edges)')
+    G=nx.Graph()
+    for n in AN: G.add_node(n)
+    for u,v,r,d,t,c in EDGES:
+        if blocked and ((u,v)==blocked or (v,u)==blocked): continue
+        G.add_edge(u,v,dist=d,time=t,cost=c)
+
+    he_set=set()
+    for e in highlight_edges: he_set.add(e); he_set.add((e[1],e[0]))
+    other=[(u,v) for u,v in G.edges() if (u,v) not in he_set and (v,u) not in he_set]
+
+    # Base edges - light gray
+    nx.draw_networkx_edges(G,POS,edgelist=other,ax=ax,edge_color='#9696AA',width=1.8,alpha=0.4)
+    # Highlighted edges
+    if highlight_edges:
+        nx.draw_networkx_edges(G,POS,edgelist=highlight_edges,ax=ax,
+                               edge_color=highlight_color,width=5,alpha=0.9)
+    # Blocked
+    if blocked and blocked[0] in POS and blocked[1] in POS:
+        ax.plot([POS[blocked[0]][0],POS[blocked[1]][0]],
+                [POS[blocked[0]][1],POS[blocked[1]][1]],
+                'X--',color='red',linewidth=3,markersize=18)
+
+    # Nodes - matching Plotly style
+    for n in AN:
+        is_hub=n.startswith('H')
+        in_p=n in path_nodes
+        col=HUB_COL if is_hub else ZONE_COL
+        sz=1200 if in_p else (1000 if is_hub else 850)
+        nx.draw_networkx_nodes(G,POS,nodelist=[n],ax=ax,node_color=col,node_size=sz,
+                               edgecolors=BORDER,linewidths=2.5,alpha=0.95)
+
+    # White bold labels inside nodes
+    nx.draw_networkx_labels(G,POS,ax=ax,font_size=13,font_weight='bold',
+                            font_color='white',font_family='sans-serif')
+
+    # Edge labels with background box
+    if edge_label_key:
+        el={}
+        for u,v in G.edges():
+            d=G[u][v].get(edge_label_key,0)
+            unit='km' if edge_label_key=='dist' else ('min' if edge_label_key=='time' else 'AED')
+            el[(u,v)]=f"{d}{unit}"
+        nx.draw_networkx_edge_labels(G,POS,edge_labels=el,ax=ax,font_size=9,
+                                      font_color='#64647A',font_weight='bold',
+                                      bbox=dict(boxstyle='round,pad=0.2',fc='white',
+                                               ec='#CCCCCC',alpha=0.85))
+
+    ax.set_title(title,fontsize=16,fontweight='bold',color=BORDER,pad=15,loc='center')
+    ax.axis('off')
+    ax.margins(0.08)
+
+def save(fig,name):
+    fig.savefig(name,dpi=150,bbox_inches='tight',facecolor=BG,edgecolor='none')
+    plt.close(fig)
+    print(f'  Saved: {name}')
+
+# ===== GENERATE ALL FIGURES =====
+print("Regenerating all figures (Plotly-matched style)...")
+
+# 1. Full network
+print("1. Full network")
+fig,ax=plt.subplots(figsize=(18,12),facecolor=BG)
+draw_graph(ax,title='WaselX Express - Full Network (15 Nodes, 24 Edges)')
 save(fig,'graph_network_full.png')
 
-# 2. dijkstra_path_h1_d1.png
+# 2. Dijkstra H1->D1
 print("2. Dijkstra H1->D1")
-adj=build_adj()
-path,_=dijkstra(adj,'H1','D1',0)
+adj=build_adj(); path,_=dijkstra(adj,'H1','D1',0)
 pe=[(path[i],path[i+1]) for i in range(len(path)-1)]
-fig,ax=plt.subplots(figsize=(18,12),facecolor='white')
-G=base_graph()
-draw_base(ax,G,highlight_edges=pe,title=f'Q2 — Dijkstra Shortest Path: {" -> ".join(path)} (8 km)')
+fig,ax=plt.subplots(figsize=(18,12),facecolor=BG)
+draw_graph(ax,highlight_edges=pe,path_nodes=set(path),
+           title='Q2 - Dijkstra Shortest Path: H1 -> D1 (8 km)')
 save(fig,'dijkstra_path_h1_d1.png')
 
-# 3. floyd_warshall_hubs.png
+# 3. Floyd-Warshall heatmap
 print("3. Floyd-Warshall heatmap")
 INF=float('inf')
 idx_map={n:i for i,n in enumerate(AN)}
@@ -164,8 +168,7 @@ dist_fw=[[INF]*15 for _ in range(15)]
 for i in range(15): dist_fw[i][i]=0
 for u,v,r,d,t,c in EDGES:
     i,j=idx_map[u],idx_map[v]
-    dist_fw[i][j]=min(dist_fw[i][j],t)
-    dist_fw[j][i]=min(dist_fw[j][i],t)
+    dist_fw[i][j]=min(dist_fw[i][j],t); dist_fw[j][i]=min(dist_fw[j][i],t)
 for k in range(15):
     for i in range(15):
         for j in range(15):
@@ -174,7 +177,8 @@ for k in range(15):
 hub_idx=[idx_map[h] for h in HUBS]
 hub_mat=np.array([[dist_fw[i][j] for j in hub_idx] for i in hub_idx],dtype=float)
 hub_mat[hub_mat>9000]=np.nan
-fig,ax=plt.subplots(figsize=(10,8),facecolor='white')
+fig,ax=plt.subplots(figsize=(10,8),facecolor=BG)
+ax.set_facecolor(BG)
 im=ax.imshow(hub_mat,cmap='RdYlGn_r',interpolation='nearest')
 ax.set_xticks(range(7));ax.set_yticks(range(7))
 ax.set_xticklabels(HUBS,fontsize=12,fontweight='bold')
@@ -182,19 +186,18 @@ ax.set_yticklabels(HUBS,fontsize=12,fontweight='bold')
 for i in range(7):
     for j in range(7):
         v=hub_mat[i][j]
-        txt='∞' if np.isnan(v) else f'{int(v)}'
-        ax.text(j,i,txt,ha='center',va='center',fontsize=13,fontweight='bold',
-                color='white' if (not np.isnan(v) and v>30) else '#2C3E50')
+        txt='INF' if np.isnan(v) else f'{int(v)}'
+        c='white' if (not np.isnan(v) and v>30) else BORDER
+        ax.text(j,i,txt,ha='center',va='center',fontsize=13,fontweight='bold',color=c)
 plt.colorbar(im,ax=ax,label='Travel Time (min)',shrink=0.85)
-ax.set_title('Q3 — Floyd-Warshall: Hub-to-Hub Travel Times (min)',fontsize=16,fontweight='bold',pad=15)
+ax.set_title('Q3 - Floyd-Warshall: Hub-to-Hub Travel Times (min)',fontsize=16,fontweight='bold',color=BORDER,pad=15)
 fig.tight_layout()
 save(fig,'floyd_warshall_hubs.png')
 
-# 4-5. MST figures
+# 4. Kruskal MST
 print("4. Kruskal MST")
 sorted_edges=sorted(EDGES,key=lambda e:e[5])
-parent={n:n for n in AN}
-rank={n:0 for n in AN}
+parent={n:n for n in AN}; rank={n:0 for n in AN}
 def find(x):
     while parent[x]!=x: parent[x]=parent[parent[x]]; x=parent[x]
     return x
@@ -206,59 +209,58 @@ def union(a,b):
     if rank[a]==rank[b]: rank[a]+=1
     return True
 mst_edges=[]
+mst_nodes=set()
 for u,v,r,d,t,c in sorted_edges:
-    if union(u,v): mst_edges.append((u,v))
-fig,ax=plt.subplots(figsize=(18,12),facecolor='white')
-G=base_graph()
-draw_base(ax,G,highlight_edges=mst_edges,highlight_color='#27AE60',
-          edge_label_key='cost',title="Q4a — Kruskal's Minimum Spanning Tree (Cost in AED)")
+    if union(u,v): mst_edges.append((u,v)); mst_nodes.add(u); mst_nodes.add(v)
+fig,ax=plt.subplots(figsize=(18,12),facecolor=BG)
+draw_graph(ax,highlight_edges=mst_edges,highlight_color='#27AE60',
+           edge_label_key='cost',path_nodes=mst_nodes,
+           title="Q4a - Kruskal's Minimum Spanning Tree (Cost in AED)")
 save(fig,'mst_kruskal.png')
 
+# 5. Prim MST
 print("5. Prim MST")
 adj_c=build_adj()
-visited={'H2'}; prim_edges=[]
-candidates=[]
-for nb,d,t,c in adj_c['H2']: candidates.append((c,'H2',nb))
+visited={'H2'}; prim_edges=[]; prim_nodes={'H2'}
+candidates=[(c,'H2',nb) for nb,d,t,c in adj_c['H2']]
 candidates.sort()
 while candidates:
     cost,u,v=candidates.pop(0)
     if v in visited: continue
-    visited.add(v); prim_edges.append((u,v))
+    visited.add(v); prim_edges.append((u,v)); prim_nodes.add(v)
     for nb,d,t,c in adj_c[v]:
         if nb not in visited: candidates.append((c,v,nb))
     candidates.sort()
-fig,ax=plt.subplots(figsize=(18,12),facecolor='white')
-G=base_graph()
-draw_base(ax,G,highlight_edges=prim_edges,highlight_color='#8E44AD',
-          edge_label_key='cost',title="Q4c — Prim's MST from H2 (Cost in AED)")
+fig,ax=plt.subplots(figsize=(18,12),facecolor=BG)
+draw_graph(ax,highlight_edges=prim_edges,highlight_color='#8E44AD',
+           edge_label_key='cost',path_nodes=prim_nodes,
+           title="Q4c - Prim's MST from H2 (Cost in AED)")
 save(fig,'mst_prim.png')
 
 # 6. BFS tree from H3
 print("6. BFS tree from H3")
 adj_bfs=build_adj()
-visited_bfs={'H3'}; queue=['H3']; bfs_edges=[]; bfs_order=['H3']
-levels={'H3':0}
+vis_bfs={'H3'}; queue=['H3']; bfs_edges=[]; bfs_order=['H3']; levels={'H3':0}
 while queue:
     u=queue.pop(0)
     for nb,*_ in adj_bfs[u]:
-        if nb not in visited_bfs:
-            visited_bfs.add(nb); queue.append(nb); bfs_edges.append((u,nb))
+        if nb not in vis_bfs:
+            vis_bfs.add(nb); queue.append(nb); bfs_edges.append((u,nb))
             bfs_order.append(nb); levels[nb]=levels[u]+1
-fig,ax=plt.subplots(figsize=(18,12),facecolor='white')
-G=base_graph()
-draw_base(ax,G,highlight_edges=bfs_edges,highlight_color='#3498DB',highlight_width=4,
-          title=f'Q7a — BFS Tree from H3 (Deira Hub) — {len(bfs_order)} nodes reachable')
-# Add level annotations
+fig,ax=plt.subplots(figsize=(18,12),facecolor=BG)
+draw_graph(ax,highlight_edges=bfs_edges,highlight_color='#2980B9',
+           path_nodes=set(bfs_order),
+           title=f'Q7a - BFS Tree from H3 (Deira Hub) - {len(bfs_order)} nodes reachable')
 for n,lv in levels.items():
     ax.annotate(f'L{lv}',xy=POS[n],xytext=(12,-12),textcoords='offset points',
-               fontsize=9,color='#3498DB',fontweight='bold',
-               bbox=dict(boxstyle='round,pad=0.15',fc='#EBF5FB',ec='#3498DB'))
+               fontsize=9,color='#2980B9',fontweight='bold',
+               bbox=dict(boxstyle='round,pad=0.15',fc='#EBF5FB',ec='#2980B9'))
 save(fig,'bfs_tree_h3.png')
 
-# 7-8. BST figures
+# 7-8. BST
 print("7. BST initial")
 class BSTNode:
-    def __init__(self,k): self.key=k; self.left=None; self.right=None
+    def __init__(self,k): self.key=k;self.left=None;self.right=None
 def bst_insert(root,k):
     if root is None: return BSTNode(k)
     if k<root.key: root.left=bst_insert(root.left,k)
@@ -271,36 +273,29 @@ def bst_positions(node,x=0,y=0,dx=2.5,positions=None):
     bst_positions(node.left,x-dx,y-1.2,dx*0.55,positions)
     bst_positions(node.right,x+dx,y-1.2,dx*0.55,positions)
     return positions
-def draw_bst(ax,node,positions,title):
-    ax.set_facecolor('white')
-    if node is None: return
-    # Draw edges first
-    def draw_edges(n):
-        if n is None: return
+def draw_tree(ax,node,positions,col,title):
+    ax.set_facecolor(BG)
+    def draw_e(n):
+        if not n: return
         px,py=positions[n.key]
-        if n.left:
-            cx,cy=positions[n.left.key]
-            ax.plot([px,cx],[py,cy],'-',color='#7F8C8D',linewidth=2,zorder=1)
-            draw_edges(n.left)
-        if n.right:
-            cx,cy=positions[n.right.key]
-            ax.plot([px,cx],[py,cy],'-',color='#7F8C8D',linewidth=2,zorder=1)
-            draw_edges(n.right)
-    draw_edges(node)
+        for child in [n.left,n.right]:
+            if child:
+                cx,cy=positions[child.key]
+                ax.plot([px,cx],[py,cy],'-',color='#9696AA',linewidth=2,zorder=1)
+                draw_e(child)
+    draw_e(node)
     for k,(x,y) in positions.items():
-        circle=plt.Circle((x,y),0.35,color='#2980B9',ec='#2C3E50',linewidth=2,zorder=2)
+        circle=plt.Circle((x,y),0.35,color=col,ec=BORDER,linewidth=2.5,zorder=2)
         ax.add_patch(circle)
         ax.text(x,y,str(k),ha='center',va='center',fontsize=11,fontweight='bold',color='white',zorder=3)
-    ax.set_xlim(-5,5); ax.set_ylim(-6.5,1)
-    ax.set_aspect('equal'); ax.axis('off')
-    ax.set_title(title,fontsize=15,fontweight='bold',color='#2C3E50',pad=15)
+    ax.set_xlim(-5,5);ax.set_ylim(-6.5,1);ax.set_aspect('equal');ax.axis('off')
+    ax.set_title(title,fontsize=15,fontweight='bold',color=BORDER,pad=15)
 
 keys=[1045,1023,1078,1012,1034,1056,1089,1005,1020,1067,1050,1098]
 root=None
 for k in keys: root=bst_insert(root,k)
-pos_bst=bst_positions(root)
-fig,ax=plt.subplots(figsize=(14,10),facecolor='white')
-draw_bst(ax,root,pos_bst,'Q8a — Binary Search Tree (12 Orders Inserted)')
+fig,ax=plt.subplots(figsize=(14,10),facecolor=BG)
+draw_tree(ax,root,bst_positions(root),'#2980B9','Q8a - Binary Search Tree (12 Orders Inserted)')
 save(fig,'bst_initial.png')
 
 print("8. BST after deletion")
@@ -313,27 +308,23 @@ def bst_delete(root,k):
         if root.right is None: return root.left
         succ=root.right
         while succ.left: succ=succ.left
-        root.key=succ.key
-        root.right=bst_delete(root.right,succ.key)
+        root.key=succ.key; root.right=bst_delete(root.right,succ.key)
     return root
 root=bst_delete(root,1078)
-pos_bst2=bst_positions(root)
-fig,ax=plt.subplots(figsize=(14,10),facecolor='white')
-draw_bst(ax,root,pos_bst2,'Q8d — BST After Deleting Order 1078 (Successor: 1089)')
+fig,ax=plt.subplots(figsize=(14,10),facecolor=BG)
+draw_tree(ax,root,bst_positions(root),'#2980B9','Q8d - BST After Deleting Order 1078 (Successor: 1089)')
 save(fig,'bst_after_deletion.png')
 
-# 9. AVL tree
+# 9. AVL
 print("9. AVL tree")
 class AVLNode:
     def __init__(self,k): self.key=k;self.left=None;self.right=None;self.height=1
 def avl_h(n): return n.height if n else 0
-def avl_bf(n): return avl_h(n.left)-avl_h(n.right) if n else 0
 def avl_uh(n):
     if n: n.height=1+max(avl_h(n.left),avl_h(n.right))
-def rr(y):
-    x=y.left;t=x.right;x.right=y;y.left=t;avl_uh(y);avl_uh(x);return x
-def lr(x):
-    y=x.right;t=y.left;y.left=x;x.right=t;avl_uh(x);avl_uh(y);return y
+def avl_bf(n): return avl_h(n.left)-avl_h(n.right) if n else 0
+def rr(y): x=y.left;t=x.right;x.right=y;y.left=t;avl_uh(y);avl_uh(x);return x
+def lr(x): y=x.right;t=y.left;y.left=x;x.right=t;avl_uh(x);avl_uh(y);return y
 def avl_insert(root,k):
     if not root: return AVLNode(k)
     if k<root.key: root.left=avl_insert(root.left,k)
@@ -347,83 +338,58 @@ def avl_insert(root,k):
     return root
 avl_root=None
 for k in keys: avl_root=avl_insert(avl_root,k)
-avl_pos=bst_positions(avl_root)
-fig,ax=plt.subplots(figsize=(14,10),facecolor='white')
-def draw_avl(ax,node,positions):
-    ax.set_facecolor('white')
-    def draw_e(n):
-        if not n: return
-        px,py=positions[n.key]
-        if n.left:
-            cx,cy=positions[n.left.key]
-            ax.plot([px,cx],[py,cy],'-',color='#7F8C8D',linewidth=2,zorder=1)
-            draw_e(n.left)
-        if n.right:
-            cx,cy=positions[n.right.key]
-            ax.plot([px,cx],[py,cy],'-',color='#7F8C8D',linewidth=2,zorder=1)
-            draw_e(n.right)
-    draw_e(node)
-    for k,(x,y) in positions.items():
-        circle=plt.Circle((x,y),0.35,color='#27AE60',ec='#2C3E50',linewidth=2,zorder=2)
-        ax.add_patch(circle)
-        ax.text(x,y,str(k),ha='center',va='center',fontsize=11,fontweight='bold',color='white',zorder=3)
-    ax.set_xlim(-5,5);ax.set_ylim(-6.5,1);ax.set_aspect('equal');ax.axis('off')
-draw_avl(ax,avl_root,avl_pos)
-ax.set_title('Q9b — AVL Tree (Balanced) — 12 Orders',fontsize=15,fontweight='bold',color='#2C3E50',pad=15)
+fig,ax=plt.subplots(figsize=(14,10),facecolor=BG)
+draw_tree(ax,avl_root,bst_positions(avl_root),'#27AE60','Q9b - AVL Tree (Balanced) - 12 Orders')
 save(fig,'avl_tree_final.png')
 
-# 10. Sorting performance
-print("10. Sorting performance chart")
+# 10. Sorting
+print("10. Sorting performance")
 random.seed(42)
-def ms_bench(a):
+def ms(a):
     if len(a)<=1:return a
-    m=len(a)//2;l=ms_bench(a[:m]);r=ms_bench(a[m:]);res=[];i=j=0
+    m=len(a)//2;l=ms(a[:m]);r=ms(a[m:]);res=[];i=j=0
     while i<len(l) and j<len(r):
         if l[i]<=r[j]:res.append(l[i]);i+=1
         else:res.append(r[j]);j+=1
     res.extend(l[i:]);res.extend(r[j:]);return res
-def qs_bench(a):
+def qs(a):
     if len(a)<=1:return a
     p=a[len(a)//2]
-    return qs_bench([x for x in a if x<p])+[x for x in a if x==p]+qs_bench([x for x in a if x>p])
-import sys; sys.setrecursionlimit(25000)
-sizes=[100,500,1000,2500,5000,10000]
-ms_t=[];qs_t=[]
+    return qs([x for x in a if x<p])+[x for x in a if x==p]+qs([x for x in a if x>p])
+sys.setrecursionlimit(25000)
+sizes=[100,500,1000,2500,5000,10000]; ms_t=[]; qs_t=[]
 for s in sizes:
     d=[random.randint(1,100000) for _ in range(s)]
-    t0=time.time();ms_bench(d[:]);ms_t.append(time.time()-t0)
-    t0=time.time();qs_bench(d[:]);qs_t.append(time.time()-t0)
-fig,ax=plt.subplots(figsize=(14,8),facecolor='white')
+    t0=time.time();ms(d[:]);ms_t.append(time.time()-t0)
+    t0=time.time();qs(d[:]);qs_t.append(time.time()-t0)
+fig,ax=plt.subplots(figsize=(14,8),facecolor=BG)
+ax.set_facecolor(BG)
 ax.plot(sizes,ms_t,'o-',color='#E74C3C',linewidth=3,markersize=10,label='Merge Sort',zorder=3)
-ax.plot(sizes,qs_t,'s-',color='#3498DB',linewidth=3,markersize=10,label='Quick Sort',zorder=3)
-ax.fill_between(sizes,ms_t,alpha=0.1,color='#E74C3C')
-ax.fill_between(sizes,qs_t,alpha=0.1,color='#3498DB')
-ax.set_xlabel('Dataset Size (number of orders)',fontsize=14)
+ax.plot(sizes,qs_t,'s-',color='#2980B9',linewidth=3,markersize=10,label='Quick Sort',zorder=3)
+ax.fill_between(sizes,ms_t,alpha=0.08,color='#E74C3C')
+ax.fill_between(sizes,qs_t,alpha=0.08,color='#2980B9')
+ax.set_xlabel('Dataset Size',fontsize=14)
 ax.set_ylabel('Execution Time (seconds)',fontsize=14)
-ax.set_title('Q22 — Merge Sort vs Quick Sort Performance Benchmark',fontsize=16,fontweight='bold')
+ax.set_title('Q22 - Merge Sort vs Quick Sort Performance',fontsize=16,fontweight='bold',color=BORDER)
 ax.legend(fontsize=13,loc='upper left',framealpha=0.9)
 ax.grid(True,alpha=0.3,linestyle='--')
-ax.set_facecolor('#FAFAFA')
 fig.tight_layout()
 save(fig,'sorting_performance.png')
 
-# 11. Road closure comparison
+# 11. Road closure
 print("11. Road closure comparison")
-adj_o=build_adj()
-adj_c=build_adj(blocked=('H1','H4'))
-p_o,_=dijkstra(adj_o,'H1','D4',0)
-p_c,_=dijkstra(adj_c,'H1','D4',0)
-fig,axes=plt.subplots(1,2,figsize=(24,12),facecolor='white')
+adj_o=build_adj(); adj_c=build_adj(blocked=('H1','H4'))
+p_o,_=dijkstra(adj_o,'H1','D4',0); p_c,_=dijkstra(adj_c,'H1','D4',0)
+fig,axes=plt.subplots(1,2,figsize=(24,12),facecolor=BG)
 for ax_i,(label,adj_u,path,blk) in enumerate([
     ('Original Network',adj_o,p_o,None),
     ('Road Closed (H1<->H4)',adj_c,p_c,('H1','H4'))]):
     ax=axes[ax_i]
-    G=base_graph(blocked=blk)
     pe=[(path[i],path[i+1]) for i in range(len(path)-1)]
-    draw_base(ax,G,highlight_edges=pe,blocked=blk,
-              title=f'{label}: {" -> ".join(path)}')
-fig.suptitle('Q27d — Road Closure Impact Analysis: H1 -> D4',fontsize=18,fontweight='bold',y=0.98)
+    draw_graph(ax,highlight_edges=pe,blocked=blk,path_nodes=set(path),
+               title=f'{label}: {" -> ".join(path)}')
+fig.suptitle('Q27d - Road Closure Impact Analysis: H1 -> D4',fontsize=18,fontweight='bold',color=BORDER,y=0.98)
 fig.tight_layout(rect=[0,0,1,0.95])
 save(fig,'road_closure_comparison.png')
 
-print("\n✅ All 11 figures regenerated successfully!")
+print("\nAll 11 figures regenerated successfully!")
