@@ -10,15 +10,53 @@ import pandas as pd
 
 st.set_page_config(page_title="WaselX Express", page_icon="🚚", layout="wide", initial_sidebar_state="expanded")
 
-# ── CSS ──
-st.markdown("""<style>
+# ── Glassmorphism Dark Theme CSS ──
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+*{font-family:'Inter',sans-serif}
+.stApp{background:linear-gradient(135deg,#0a0a1a 0%,#121230 40%,#0d1b2a 100%)}
 .block-container{padding-top:1.2rem}
-h1{background:linear-gradient(90deg,#E67E22,#1ABC9C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:2.2rem!important}
-.stMetric{background:rgba(230,126,34,0.08);border-radius:12px;padding:12px;border-left:4px solid #E67E22}
-.route-card{background:linear-gradient(135deg,rgba(230,126,34,0.12),rgba(26,188,156,0.12));border-radius:12px;padding:18px;margin:8px 0;border-left:5px solid #E67E22;font-size:1.05em}
-[data-testid="stSidebar"]{background:linear-gradient(180deg,#1a1a2e,#16213e)}
-[data-testid="stSidebar"] *{color:#e0e0e0!important}
-</style>""", unsafe_allow_html=True)
+h1{background:linear-gradient(90deg,#FF6B35,#FFD700,#1ABC9C);background-size:200% auto;
+   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+   animation:gradient 4s ease infinite;font-size:2.4rem!important;font-weight:900!important}
+@keyframes gradient{0%,100%{background-position:0% center}50%{background-position:100% center}}
+h2,h3,h4,.stMarkdown p,.stMarkdown li{color:#e0e8f0!important}
+.stMetric{background:rgba(255,107,53,0.06)!important;backdrop-filter:blur(12px);
+   border-radius:16px!important;padding:16px!important;border:1px solid rgba(255,107,53,0.2)!important;
+   border-left:4px solid #FF6B35!important;transition:transform 0.3s,box-shadow 0.3s}
+.stMetric:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(255,107,53,0.2)}
+[data-testid="stMetricValue"]{color:#ffffff!important;font-weight:700!important}
+[data-testid="stMetricLabel"]{color:#b0b8c8!important}
+.route-card{background:rgba(255,255,255,0.04)!important;backdrop-filter:blur(16px);
+   border-radius:16px;padding:20px;margin:10px 0;border:1px solid rgba(255,107,53,0.15);
+   border-left:5px solid #FF6B35;color:#e0e8f0;transition:transform 0.3s,box-shadow 0.3s}
+.route-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,53,0.15)}
+[data-testid="stSidebar"]{background:rgba(10,10,30,0.85)!important;backdrop-filter:blur(20px)!important;
+   border-right:1px solid rgba(255,255,255,0.06)!important}
+[data-testid="stSidebar"] *{color:#c8d0e0!important}
+[data-testid="stSidebar"] .stRadio label{padding:10px 16px!important;border-radius:10px!important;
+   transition:all 0.3s!important;margin:2px 0!important}
+[data-testid="stSidebar"] .stRadio label:hover{background:rgba(255,107,53,0.12)!important;
+   transform:translateX(4px)}
+[data-testid="stSidebar"] .stRadio label[data-checked="true"]{background:rgba(255,107,53,0.18)!important;
+   border-left:3px solid #FF6B35!important}
+button[kind="primary"]{background:linear-gradient(135deg,#FF6B35,#E67E22)!important;
+   border:none!important;border-radius:12px!important;font-weight:700!important;
+   transition:all 0.3s!important;box-shadow:0 4px 15px rgba(255,107,53,0.3)!important}
+button[kind="primary"]:hover{transform:translateY(-2px)!important;
+   box-shadow:0 8px 25px rgba(255,107,53,0.4)!important}
+.stDataFrame{border-radius:12px!important;overflow:hidden}
+.stExpander{background:rgba(255,255,255,0.03)!important;border-radius:12px!important;
+   border:1px solid rgba(255,255,255,0.06)!important}
+[data-testid="stExpander"] summary{color:#c8d0e0!important}
+hr{border-color:rgba(255,255,255,0.06)!important}
+.stAlert{backdrop-filter:blur(10px)!important;border-radius:12px!important}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:rgba(0,0,0,0.2)}
+::-webkit-scrollbar-thumb{background:rgba(255,107,53,0.3);border-radius:3px}
+</style>
+""", unsafe_allow_html=True)
 
 # ═══════════════ DATA ═══════════════
 NODES = {
@@ -121,12 +159,12 @@ def make_graph(paths_data=None, blocked=None, title="WaselX Express Network", he
         mx,my=(x0+x1)/2,(y0+y1)/2
         fig.add_trace(go.Scatter(
             x=[x0,x1,None], y=[y0,y1,None], mode='lines',
-            line=dict(width=2, color='rgba(150,150,170,0.4)'),
+            line=dict(width=2, color='rgba(100,110,140,0.35)'),
             hoverinfo='skip', showlegend=False
         ))
         fig.add_annotation(x=mx, y=my, text=f"<b>{d}km</b>", showarrow=False,
-                          font=dict(size=10, color='rgba(100,100,120,0.7)'),
-                          bgcolor='rgba(255,255,255,0.8)', borderpad=2)
+                          font=dict(size=10, color='rgba(160,170,200,0.7)'),
+                          bgcolor='rgba(15,21,37,0.8)', borderpad=2)
 
     # --- Blocked edge ---
     if blocked and blocked[0] in POS and blocked[1] in POS:
@@ -153,7 +191,7 @@ def make_graph(paths_data=None, blocked=None, title="WaselX Express Network", he
                     mx,my=(x0+x1)/2,(y0+y1)/2
                     fig.add_annotation(x=mx, y=my, text=f"<b>{d}km</b>", showarrow=False,
                                       font=dict(size=11, color=col),
-                                      bgcolor='rgba(255,255,255,0.9)', borderpad=3,
+                                      bgcolor='rgba(15,21,37,0.9)', borderpad=3,
                                       bordercolor=col, borderwidth=1)
                     break
         fig.add_trace(go.Scatter(
@@ -190,14 +228,14 @@ def make_graph(paths_data=None, blocked=None, title="WaselX Express Network", he
     ))
 
     fig.update_layout(
-        title=dict(text=f'<b>{title}</b>', font=dict(size=18, color='#2C3E50'), x=0.5, xanchor='center'),
-        plot_bgcolor='#FAFBFC', paper_bgcolor='#FAFBFC',
+        title=dict(text=f'<b>{title}</b>', font=dict(size=18, color='#e0e8f0'), x=0.5, xanchor='center'),
+        plot_bgcolor='#0f1525', paper_bgcolor='#0f1525',
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, scaleanchor='y'),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         height=height, margin=dict(l=20,r=20,t=80,b=60),
         legend=dict(orientation='h', yanchor='top', y=-0.02, xanchor='center', x=0.5,
-                    font=dict(size=12), bgcolor='rgba(255,255,255,0.9)'),
-        hoverlabel=dict(bgcolor='white', font_size=13, font_family='Arial'),
+                    font=dict(size=12, color='#c8d0e0'), bgcolor='rgba(15,21,37,0.9)'),
+        hoverlabel=dict(bgcolor='#1a2035', font_size=13, font_family='Inter', font_color='#e0e8f0'),
         dragmode='pan'
     )
     return fig
