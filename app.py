@@ -213,9 +213,10 @@ def mkgraph(pdata=None,blocked=None,title="WaselX Network",height=680):
         dragmode='pan')
     return fig
 
-# ══════════ NAVBAR ══════════
+# ══════════ HEADER ══════════
+st.title("🚚 WaselX Express — Delivery Network Simulator")
 st.markdown("""<div class="nav-bar">
-<span class="nav-brand">🚚 WaselX Express</span>
+<span class="nav-brand">DSA Final Project</span>
 <span class="nav-meta">DSA Final Project &bull; Group 3 &bull; SP Jain MAIB<br>
 Kartik Joshi &bull; Gagandeep Singh &bull; Samuel Alex &bull; Prem Kukreja</span>
 </div>""",unsafe_allow_html=True)
@@ -224,7 +225,6 @@ Kartik Joshi &bull; Gagandeep Singh &bull; Samuel Alex &bull; Prem Kukreja</span
 t1,t2,t3=st.tabs(["🏠 Overview","🗺️ Q6: Path Visualizer","🛣️ Q27: Path Simulator"])
 
 with t1:
-    st.title("🚚 WaselX Express — Delivery Network Simulator")
     st.markdown("**Optimizing Last-Mile Delivery Across the UAE Using DSA**")
     st.markdown("---")
     c1,c2,c3,c4=st.columns(4)
@@ -314,11 +314,11 @@ with t3:
             with ca:
                 st.markdown("**Original**")
                 if p_o and len(p_o)>1:
-                    st.plotly_chart(mkgraph([{'path':p_o,'label':f'Original: {d1v}km'}],title=f"Original: {' → '.join(p_o)}",height=480),use_container_width=True)
+                    st.plotly_chart(mkgraph([{'path':p_o,'label':f'Original: {d1v}km'}],title=f"Original: {' → '.join(p_o)}",height=580),use_container_width=True)
             with cb:
                 st.markdown("**After Closure**")
                 if p_c and len(p_c)>1:
-                    st.plotly_chart(mkgraph([{'path':p_c,'label':f'Rerouted: {d2}km'}],blocked=blocked,title=f"Rerouted: {' → '.join(p_c)}",height=480),use_container_width=True)
+                    st.plotly_chart(mkgraph([{'path':p_c,'label':f'Rerouted: {d2}km'}],blocked=blocked,title=f"Rerouted: {' → '.join(p_c)}",height=580),use_container_width=True)
         else:
             pm,_=dijkstra(adj_o,src,dst,wi)
             if pm and len(pm)>1:
