@@ -46,6 +46,13 @@ hr{border:none;border-top:1px solid rgba(139,92,246,.1);margin:16px 0}
 .chk-row input[type=checkbox]{accent-color:#8b5cf6;width:16px;height:16px}
 .info-box{background:rgba(6,182,212,.06);border:1px solid rgba(6,182,212,.15);border-radius:12px;padding:14px 18px;margin:12px 0;color:#94a3b8}
 @media(max-width:768px){.metrics{grid-template-columns:1fr 1fr}.compare{grid-template-columns:1fr}nav{margin:12px 16px 0}.container{padding:16px}header{padding:12px 16px}}
+.edge-details{background:rgba(139,92,246,.03);border:1px solid rgba(139,92,246,.1);border-radius:14px;margin:16px 0;overflow:hidden}
+.edge-details summary{padding:16px 20px;cursor:pointer;color:#c4b5fd;font-size:1.1rem;font-weight:700;list-style:none;display:flex;align-items:center;gap:8px;transition:background .3s}
+.edge-details summary:hover{background:rgba(139,92,246,.06)}
+.edge-details summary::before{content:'▶';font-size:.75rem;transition:transform .3s;display:inline-block}
+.edge-details[open] summary::before{transform:rotate(90deg)}
+.edge-details summary::-webkit-details-marker{display:none}
+.edge-details table{margin:0;border-radius:0}
 </style></head><body>
 <div class="orb orb-1"></div><div class="orb orb-2"></div>
 <header><span class="logo">🚚 WaselX Express</span><div class="hdr-meta">DSA Final Project · Group 3 · SP Jain MAIB<br>Kartik Joshi · Gagandeep Singh · Samuel Alex · Prem Kukreja</div></header>
@@ -57,8 +64,8 @@ hr{border:none;border-top:1px solid rgba(139,92,246,.1);margin:16px 0}
 <p class="sub">Optimizing Last-Mile Delivery Across the UAE Using DSA</p><hr>
 <div class="metrics"><div class="metric"><div class="label">🏢 Nodes</div><div class="val">15</div></div><div class="metric"><div class="label">🛤️ Edges</div><div class="val">24</div></div><div class="metric"><div class="label">📦 Hubs</div><div class="val">7</div></div><div class="metric"><div class="label">📍 Zones</div><div class="val">8</div></div></div>
 <div class="graph-wrap"><div id="g-overview"></div></div>
-<h2>📋 Edge Table</h2>
-<table id="edge-table"><tr><th>From</th><th>To</th><th>Road</th><th>Dist (km)</th><th>Time (min)</th><th>Cost (AED)</th></tr></table>
+<details class="edge-details"><summary>📋 Edge Table</summary>
+<table id="edge-table"><tr><th>From</th><th>To</th><th>Road</th><th>Dist (km)</th><th>Time (min)</th><th>Cost (AED)</th></tr></table></details>
 <div class="info-box">⚠️ <b>Two disconnected components:</b> Dubai-Sharjah cluster (H1-H4, H7, D1-D5, D8) and Abu Dhabi cluster (H5, H6, D6, D7).</div>
 </div>
 <!-- Q6 -->
