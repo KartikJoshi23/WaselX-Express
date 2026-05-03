@@ -1,6 +1,6 @@
 # WaselX Express — Optimizing Last-Mile Delivery Operations Using DSA
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://waselx-express.streamlit.app)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-WaselX%20Express-blueviolet?style=for-the-badge)](https://waselx-express.netlify.app/)
 
 ## 📋 Project Overview
 
@@ -24,23 +24,13 @@ WaselX Express is a fictional UAE-based last-mile delivery company. This project
 
 ```
 WaselX-Express/
-├── WaselX_MAIB_Final_Project.ipynb   # Main Jupyter notebook (27 questions)
-├── app.py                            # Unified Streamlit app (Q6 + Q27)
-├── report.tex                        # LaTeX report source
+├── WaselX_MAIB_Final_Project.ipynb   # Main Jupyter notebook (Q1–Q27)
+├── app.py                            # Standalone Python app (graph + pathfinding)
+├── web/
+│   └── index.html                    # Production web dashboard (deployed on Netlify)
+├── index.html                        # Root redirect to web/
 ├── requirements.txt                  # Python dependencies
-├── README.md                         # This file
-└── figures/
-    ├── graph_network_full.png        # Q1 — Full 15-node network
-    ├── dijkstra_path_h1_d1.png       # Q2 — Shortest path H1→D1
-    ├── floyd_warshall_hubs.png       # Q3 — All-pairs hub heatmap
-    ├── mst_kruskal.png               # Q4a — Kruskal's MST
-    ├── mst_prim.png                  # Q4c — Prim's MST
-    ├── bfs_tree_h3.png               # Q7a — BFS tree from H3
-    ├── bst_initial.png               # Q8a — Initial BST
-    ├── bst_after_deletion.png        # Q8d — BST after deleting 1078
-    ├── avl_tree_final.png            # Q9b — Final AVL tree
-    ├── sorting_performance.png       # Q22c — Merge vs Quick Sort
-    └── road_closure_comparison.png   # Q27d — Road closure comparison
+└── README.md                         # This file
 ```
 
 ## 🚀 Setup Instructions
@@ -63,25 +53,22 @@ pip install -r requirements.txt
 ### Running the Jupyter Notebook
 
 ```bash
+# Local
 jupyter notebook WaselX_MAIB_Final_Project.ipynb
+
+# Or open in Google Colab
+# Upload the .ipynb file and run all cells
 ```
 
-### Running the Streamlit App
+### Running the Web Dashboard Locally
 
-```bash
-streamlit run app.py
-```
-
-The app includes three modules accessible via the sidebar:
-- **🏠 Overview** — Network map and edge table
-- **🗺️ Q6: Path Visualizer** — Interactive shortest path with dual-path overlay
-- **🛣️ Q27: Path Simulator** — Multi-criteria optimization + road closure simulation
+Open `web/index.html` in any modern browser — no server required.
 
 ## 🌐 Live Deployment
 
 | App | Link |
 |-----|------|
-| Streamlit App | [waselx-express.streamlit.app](https://waselx-express.streamlit.app) |
+| Web Dashboard | [waselx-express.netlify.app](https://waselx-express.netlify.app/) |
 
 ## 📊 Network Data
 
